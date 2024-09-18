@@ -1,3 +1,4 @@
+; Mark A. Alvarez Nieves
 .segment "HEADER"
   ; .byte "NES", $1A      ; iNES header identifier
   .byte $4E, $45, $53, $1A
@@ -81,73 +82,185 @@ forever:
 nmi:
   ldx #$00 	; Set SPR-RAM address to 0
   stx $2003
-@loop:	lda hello, x 	; Load the hello message into SPR-RAM
+@loop1:	lda name, x 	; Load the hello message into SPR-RAM
   sta $2004
   inx
-  cpx #$1c
-  bne @loop
+  cpx #$40 ; Se actualiza el tamano del mensaje que ensena.
+  bne @loop1
   rti
 
-hello:
-  .byte $00, $00, $00, $00 	; Why do I need these here?
+name:
   .byte $00, $00, $00, $00
-  .byte $6c, $00, $00, $6c
-  .byte $6c, $01, $00, $76
-  .byte $6c, $02, $00, $80
-  .byte $6c, $02, $00, $8A
-  .byte $6c, $03, $00, $94
+  .byte $00, $00, $00, $00
+  .byte $6c, $00, $00, $3c ; M 
+  .byte $6c, $01, $00, $46 ; A 
+  .byte $6c, $02, $00, $50 ; R 
+  .byte $6c, $03, $00, $5A ; K 
+  .byte $6c, $01, $01, $6E ; A 
+  .byte $6c, $04, $01, $78 ; L 
+  .byte $6c, $05, $01, $82 ; V 
+  .byte $6c, $01, $01, $8C ; A 
+  .byte $74, $02, $01, $96 ; R 
+  .byte $74, $06, $01, $A0 ; E 
+  .byte $74, $07, $01, $AA ; Z 
 
 palettes:
-  ; Background Palette
+  ; Background Palette 
   .byte $0f, $00, $00, $00
   .byte $0f, $00, $00, $00
   .byte $0f, $00, $00, $00
   .byte $0f, $00, $00, $00
 
-  ; Sprite Palette
-  .byte $0f, $20, $00, $00
-  .byte $0f, $00, $00, $00
-  .byte $0f, $00, $00, $00
-  .byte $0f, $00, $00, $00
+  ; Sprite Palette 
+  .byte $0f, $15, $07, $19
+  .byte $0f, $22, $18, $3A
+  .byte $0f, $28, $0C, $31
+  .byte $0f, $27, $1F, $2D
+
 
 ; Character memory
 .segment "CHARS"
-  .byte %11000011	; H (00)
-  .byte %11000011
-  .byte %11000011
-  .byte %11111111
-  .byte %11111111
-  .byte %11000011
-  .byte %11000011
-  .byte %11000011
-  .byte $00, $00, $00, $00, $00, $00, $00, $00
-
-  .byte %11111111	; E (01)
-  .byte %11111111
-  .byte %11000000
-  .byte %11111100
-  .byte %11111100
-  .byte %11000000
-  .byte %11111111
-  .byte %11111111
-  .byte $00, $00, $00, $00, $00, $00, $00, $00
-
-  .byte %11000000	; L (02)
-  .byte %11000000
-  .byte %11000000
-  .byte %11000000
-  .byte %11000000
-  .byte %11000000
-  .byte %11111111
-  .byte %11111111
-  .byte $00, $00, $00, $00, $00, $00, $00, $00
-
-  .byte %01111110	; O (03)
-  .byte %11100111
-  .byte %11000011
-  .byte %11000011
-  .byte %11000011
+  ; M (00)
+  .byte %00000000
+  .byte %00000000  
+  .byte %00000000
+  .byte %00000000
+  .byte %00000000
+  .byte %00000000
+  .byte %00000000
+  .byte %00000000
+  .byte %00000000
   .byte %11000011
   .byte %11100111
+  .byte %11111111
+  .byte %11111111
+  .byte %11011011
+  .byte %11000011
+  .byte %11000011
+  
+
+  ; A (01)
+  .byte %00011000
+  .byte %00111100
+  .byte %01100110
+  .byte %01100110
   .byte %01111110
-  .byte $00, $00, $00, $00, $00, $00, $00, $00
+  .byte %01100110
+  .byte %01100110
+  .byte %00000000
+  .byte %00000000
+  .byte %00000000
+  .byte %00000000
+  .byte %00000000
+  .byte %00000000
+  .byte %00000000
+  .byte %00000000
+  .byte %00000000
+
+  ; R (02)
+  .byte %00000000
+  .byte %00000000
+  .byte %00000000
+  .byte %00000000
+  .byte %00000000
+  .byte %00000000
+  .byte %00000000
+  .byte %00000000
+  .byte %11111100
+  .byte %01100110
+  .byte %01100110
+  .byte %01111100
+  .byte %01101100
+  .byte %01100110
+  .byte %11100110
+  .byte %00000000
+
+  ; K (03)
+  .byte %11000110
+  .byte %11001100
+  .byte %11011000
+  .byte %11110000
+  .byte %11011000
+  .byte %11001100
+  .byte %11000110
+  .byte %00000000
+  .byte %11000110
+  .byte %11001100
+  .byte %11011000
+  .byte %11110000
+  .byte %11011000
+  .byte %11001100
+  .byte %11000110
+  .byte %00000000
+
+  ; L (04)
+  .byte %11110000
+  .byte %01100000
+  .byte %01100000
+  .byte %01100000
+  .byte %01100000
+  .byte %01100010
+  .byte %11111110
+  .byte %00000000
+  .byte %11110000
+  .byte %01100000
+  .byte %01100000
+  .byte %01100000
+  .byte %01100000
+  .byte %01100010
+  .byte %11111110
+  .byte %00000000
+
+  ; V (05)
+  .byte %11000011
+  .byte %11000011
+  .byte %11000011
+  .byte %01100110
+  .byte %01100110
+  .byte %00111100
+  .byte %00011000
+  .byte %00000000
+  .byte %11000011
+  .byte %11000011
+  .byte %11000011
+  .byte %01100110
+  .byte %01100110
+  .byte %00111100
+  .byte %00011000
+  .byte %00000000
+
+  ; E (06)
+  .byte %00000000
+  .byte %00000000
+  .byte %00000000
+  .byte %00000000
+  .byte %00000000
+  .byte %00000000
+  .byte %00000000
+  .byte %00000000
+  .byte %11111111
+  .byte %01100000
+  .byte %01100000
+  .byte %01111111
+  .byte %01100000
+  .byte %01100000
+  .byte %11111111
+  .byte %00000000
+
+  ; Z (07)
+  .byte %00000000
+  .byte %11111111
+  .byte %00000110
+  .byte %00001100
+  .byte %00011000
+  .byte %00110000
+  .byte %01100000
+  .byte %11111111
+  .byte %00000000
+  .byte %11111111
+  .byte %00000110
+  .byte %00001100
+  .byte %00011000
+  .byte %00110000
+  .byte %01100000
+  .byte %11111111
