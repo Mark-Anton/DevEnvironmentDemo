@@ -21,16 +21,16 @@
 .segment "CODE"
 
 reset:
-  sei		; disable IRQs
-  cld		; disable decimal mode
-  ldx #$40
-  stx $4017	; disable APU frame IRQ
-  ldx #$ff 	; Set up stack
-  txs		;  .
-  inx		; now X = 0
-  stx $2000	; disable NMI
-  stx $2001 	; disable rendering
-  stx $4010 	; disable DMC IRQs
+  sei          ; disable IRQs
+  cld          ; disable decimal mode
+  ldx #$40     
+  stx $4017    ; disable APU frame IRQ
+  ldx #$ff     ; Set up the stack
+  txs          ; .
+  inx          ; now X = 0
+  stx $2000    ; disable NMI
+  stx $2001    ; disable rendering 
+  stx $4010    ; disable DMC IRQs
 
 ;; first wait for vblank to make sure PPU is ready
 vblankwait1:
@@ -50,8 +50,8 @@ clear_memory:
   inx
   bne clear_memory
 
-;; second wait for vblank, PPU is ready after this
 vblankwait2:
+
   bit $2002
   bpl vblankwait2
 
@@ -59,71 +59,97 @@ main:
 load_palettes:
   lda $2002
   lda #$3f
-  sta $2006
+  sta $2006 ; Set the high byte of PPU address
   lda #$00
-  sta $2006
+  sta $2006 ; Set the low byte of PPU address
   ldx #$00
 @loop:
   lda palettes, x
-  sta $2007
+  sta $2007 ; Writes to the PPU
   inx
   cpx #$20
   bne @loop
 
 enable_rendering:
-  lda #%10000000	; Enable NMI
+  lda #%10000000  ; Enable NMI 
   sta $2000
-  lda #%00010000	; Enable Sprites
+  lda #%00011110	; Enable Sprites and background rendering <---this was the problem for not rendering the background!
   sta $2001
 
 forever:
   jmp forever
 
 nmi:
-  ldx #$00 	; Set SPR-RAM address to 0
-  stx $2003
-@loop1:	lda name, x 	; Load the hello message into SPR-RAM
-  sta $2004
+  ; Set PPU Address to start writing at the top left of the screen
+  lda #$20 ; High byte of the nametable address ($2000 for nametable)
+  sta $2006
+  lda #$6A ; Low byte of the nametable address (middle of the screen)
+  sta $2006
+
+  ldx #$00 ; Initialize X to 0 to start writing tiles
+
+@loop1:
+  lda name, x ; Load a tile index from the name table
+  sta $2007 ; Write it to the PPU (background tile memory)
   inx
-  cpx #$40 ; Se actualiza el tamano del mensaje que ensena.
+  cpx #$0C ; Se actualiza el tamano del mensaje que ensena.
   bne @loop1
+
+  ; Set PPU address to the attribute table for the nametable
+  lda #$23
+  sta $2006
+  lda #$C2
+  sta $2006
+
+  ; Load and write attribute bytes
+  lda #$AA ; This sets the palette for the first 4 blocks.
+  sta $2007 ; Write to attribute byte $23C2
+
+  lda #$A8
+  sta $2007 ; Write to attribute byte $23C3
+
   rti
 
 name:
-  .byte $00, $00, $00, $00
-  .byte $00, $00, $00, $00
-  .byte $6c, $00, $00, $3c ; M 
-  .byte $6c, $01, $00, $46 ; A 
-  .byte $6c, $02, $00, $50 ; R 
-  .byte $6c, $03, $00, $5A ; K 
-  .byte $6c, $01, $01, $6E ; A 
-  .byte $6c, $04, $01, $78 ; L 
-  .byte $6c, $05, $01, $82 ; V 
-  .byte $6c, $01, $01, $8C ; A 
-  .byte $74, $02, $01, $96 ; R 
-  .byte $74, $06, $01, $A0 ; E 
-  .byte $74, $07, $01, $AA ; Z 
+  ; Tile index for "MARK ALVAREZ" in a single horizontal line
+  .byte $01, $02, $03, $04, $00, $02, $05, $06, $02, $03, $07, $08
 
 palettes:
-  ; Background Palette 
-  .byte $0f, $00, $00, $00
-  .byte $0f, $00, $00, $00
-  .byte $0f, $00, $00, $00
-  .byte $0f, $00, $00, $00
+  ; Background palette
+  .byte $0f, $15, $07, $19  ; Palette 1
+  .byte $0f, $22, $18, $3A  ; Palette 2
+  .byte $0f, $28, $0C, $31  ; Palette 3
+  .byte $0f, $27, $1F, $2D  ; Palette 4
 
-  ; Sprite Palette 
-  .byte $0f, $15, $07, $19
-  .byte $0f, $22, $18, $3A
-  .byte $0f, $28, $0C, $31
-  .byte $0f, $27, $1F, $2D
-
+  ; Sprite palettes
+  .byte $0f, $15, $07, $19  ; Palette 1
+  .byte $0f, $22, $18, $3A  ; Palette 2
+  .byte $0f, $28, $0C, $31  ; Palette 3
+  .byte $0f, $27, $1F, $2D  ; Palette 4
 
 ; Character memory
 .segment "CHARS"
-  ; M (00)
+  ; Blank (00)
+  .byte %00000000
+  .byte %00000000
+  .byte %00000000
+  .byte %00000000
+  .byte %00000000
+  .byte %00000000
+  .byte %00000000
+  .byte %00000000
+  .byte %00000000
+  .byte %00000000
+  .byte %00000000
+  .byte %00000000
+  .byte %00000000
+  .byte %00000000
+  .byte %00000000
+  .byte %00000000
+
+  ; M (01)
   .byte %00000000
   .byte %00000000  
-  .byte %00000000
   .byte %00000000
   .byte %00000000
   .byte %00000000
@@ -137,9 +163,10 @@ palettes:
   .byte %11011011
   .byte %11000011
   .byte %11000011
+  .byte %00000000
   
 
-  ; A (01)
+  ; A (02)
   .byte %00011000
   .byte %00111100
   .byte %01100110
@@ -157,7 +184,7 @@ palettes:
   .byte %00000000
   .byte %00000000
 
-  ; R (02)
+  ; R (03)
   .byte %00000000
   .byte %00000000
   .byte %00000000
@@ -175,7 +202,7 @@ palettes:
   .byte %11100110
   .byte %00000000
 
-  ; K (03)
+  ; K (04)
   .byte %11000110
   .byte %11001100
   .byte %11011000
@@ -193,7 +220,7 @@ palettes:
   .byte %11000110
   .byte %00000000
 
-  ; L (04)
+  ; L (05)
   .byte %11110000
   .byte %01100000
   .byte %01100000
@@ -211,7 +238,7 @@ palettes:
   .byte %11111110
   .byte %00000000
 
-  ; V (05)
+  ; V (06)
   .byte %11000011
   .byte %11000011
   .byte %11000011
@@ -229,7 +256,7 @@ palettes:
   .byte %00011000
   .byte %00000000
 
-  ; E (06)
+  ; E (07)
   .byte %00000000
   .byte %00000000
   .byte %00000000
@@ -238,17 +265,16 @@ palettes:
   .byte %00000000
   .byte %00000000
   .byte %00000000
-  .byte %11111111
+  .byte %11111110
   .byte %01100000
   .byte %01100000
-  .byte %01111111
+  .byte %01111110
   .byte %01100000
   .byte %01100000
-  .byte %11111111
+  .byte %11111110
   .byte %00000000
 
-  ; Z (07)
-  .byte %00000000
+  ; Z (08)
   .byte %11111111
   .byte %00000110
   .byte %00001100
@@ -264,3 +290,4 @@ palettes:
   .byte %00110000
   .byte %01100000
   .byte %11111111
+  .byte %00000000
